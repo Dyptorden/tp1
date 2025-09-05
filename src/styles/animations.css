@@ -1,0 +1,9 @@
+/* styles/animations.css */
+@keyframes cloudMotion {
+  0% {
+    transform: translateX(-10px) translateY(-5px);
+  }
+  100% {
+    transform: translateX(10px) translateY(5px);
+  }
+}
