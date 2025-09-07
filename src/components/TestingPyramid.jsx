@@ -1,48 +1,55 @@
-// TestingPyramid.jsx - Refactored Main Component
-// This demonstrates the clean architecture with separated concerns
-
+// TestingPyramid.jsx - Enhanced with connecting lines and technology icons
 import React, { useState, useEffect } from 'react';
+
+// Import technology icons
+import katalonLogo from '../assets/Katalon.png';
+import espressoLogo from '../assets/espresso_logo.png';
+import maestroLogo from '../assets/maestro.jpg';
+import sonarcloudLogo from '../assets/Sonarcloud.png';
 
 // === API SERVICE LAYER ===
 const apiService = {
   async fetchYearData() {
     try {
       const response = await fetch('https://api.restful-api.dev/objects/7');
+      if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
-      return data.data.year;
+      return data.data?.year || '2023';
     } catch (error) {
       console.error('Error fetching year data:', error);
-      return 'Error';
+      return '2023'; // fallback value instead of 'Error'
     }
   },
 
   async fetchPriceData() {
     try {
       const response = await fetch('https://api.restful-api.dev/objects?id=3&id=5&id=10');
+      if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       const samsungDevice = data.find(item => item.id === "5");
       if (samsungDevice && samsungDevice.data && samsungDevice.data.price) {
-        return `$${samsungDevice.data.price}`;
+        return `${samsungDevice.data.price}`;
       }
-      return 'No price';
+      return '$1999'; // fallback value
     } catch (error) {
       console.error('Error fetching price data:', error);
-      return 'Error';
+      return '$1999'; // fallback value instead of 'Error'
     }
   },
 
   async fetchCapacityData() {
     try {
       const response = await fetch('https://api.restful-api.dev/objects');
+      if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       const appleDevice = data.find(item => item.id === "3");
       if (appleDevice && appleDevice.data && appleDevice.data['capacity GB']) {
         return `${appleDevice.data['capacity GB']}GB`;
       }
-      return 'No capacity';
+      return '128GB'; // fallback value
     } catch (error) {
       console.error('Error fetching capacity data:', error);
-      return 'Error';
+      return '128GB'; // fallback value instead of 'Error'
     }
   }
 };
@@ -86,6 +93,16 @@ const COLORS = {
     GLOW: ['rgba(59, 130, 246, 0.6)', 'rgba(59, 130, 246, 0.4)', 'rgba(59, 130, 246, 0.3)'],
     CLOUD_EFFECTS: 'radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(147, 197, 253, 0.08) 0%, transparent 60%), radial-gradient(circle at 40% 70%, rgba(96, 165, 250, 0.12) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 70%)'
   }
+};
+
+// === Technology Icons Configuration ===
+const TECH_ICONS = {
+  1: [{ src: katalonLogo, alt: 'Katalon', name: 'Katalon' }],
+  2: [
+    { src: espressoLogo, alt: 'Espresso', name: 'Espresso' },
+    { src: maestroLogo, alt: 'Maestro', name: 'Maestro' }
+  ],
+  3: [{ src: sonarcloudLogo, alt: 'SonarCloud', name: 'SonarCloud' }]
 };
 
 // === UTILITY FUNCTIONS ===
@@ -197,7 +214,6 @@ const PyramidSide = ({ theme, title, subtitle, topValue, bottomValue, hoveredLay
 const TestingPyramid = () => {
   const { yearData, priceData, capacityData } = usePyramidData();
   const [hoveredLayer, setHoveredLayer] = useState(null);
-  // Toggle this to enable/disable middle layer striped effect: change true to false
   const [middleLayerDisabled] = useState(true);
 
   return (
@@ -206,6 +222,30 @@ const TestingPyramid = () => {
       position: 'relative', overflow: 'hidden'
     }}>
       <style>{`@keyframes cloudMotion { 0% { transform: translateX(-10px) translateY(-5px); } 100% { transform: translateX(10px) translateY(5px); } }`}</style>
+
+      {/* Connection Lines - Dotted lines linking pyramid layers */}
+      <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, transform: 'translateY(-290px)', zIndex: 1 }}>
+        <div style={{
+          position: 'absolute', left: 0, right: 0, height: '2px',
+          background: 'repeating-linear-gradient(to right, #64748b 0px, #64748b 8px, transparent 8px, transparent 16px)',
+          opacity: 0.6, top: '150px'
+        }} />
+        <div style={{
+          position: 'absolute', left: 0, right: 0, height: '2px',
+          background: 'repeating-linear-gradient(to right, #64748b 0px, #64748b 8px, transparent 8px, transparent 16px)',
+          opacity: 0.6, top: '300px'
+        }} />
+        <div style={{
+          position: 'absolute', left: 0, right: 0, height: '2px',
+          background: 'repeating-linear-gradient(to right, #64748b 0px, #64748b 8px, transparent 8px, transparent 16px)',
+          opacity: 0.6, top: '450px'
+        }} />
+        <div style={{
+          position: 'absolute', left: 0, right: 0, height: '2px',
+          background: 'repeating-linear-gradient(to right, #64748b 0px, #64748b 8px, transparent 8px, transparent 16px)',
+          opacity: 0.6, top: '600px'
+        }} />
+      </div>
 
       <PyramidSide
         theme={COLORS.ANDROID} title="Android Testing" subtitle="Test Coverage Visualization"
@@ -218,6 +258,102 @@ const TestingPyramid = () => {
         topValue={capacityData} bottomValue={yearData} hoveredLayer={hoveredLayer}
         setHoveredLayer={setHoveredLayer} middleLayerDisabled={middleLayerDisabled}
         sidePrefix="ios" />
+
+      {/* Technology Icons - ALL 77px size */}
+      <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, transform: 'translateY(-290px)', zIndex: 20 }}>
+        <div style={{
+          position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)',
+          display: 'flex', gap: '12px', alignItems: 'center', top: '225px'
+        }}>
+          {TECH_ICONS[1].map((icon, index) => (
+            <div key={`top-${index}`} style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px',
+              background: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px', backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+            }}>
+              <img src={icon.src} alt={icon.alt} style={{
+                width: '77px', height: '77px', objectFit: 'contain',
+                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+              }} onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextElementSibling.style.display = 'flex';
+              }} />
+              <div style={{
+                display: 'none', width: '77px', height: '77px',
+                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
+                alignItems: 'center', justifyContent: 'center', color: 'white',
+                fontSize: '29px', fontWeight: 'bold'
+              }}>{icon.name.charAt(0)}</div>
+              <span style={{
+                fontSize: '8px', color: 'white', fontWeight: '600',
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
+              }}>{icon.name}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{
+          position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)',
+          display: 'flex', gap: '12px', alignItems: 'center', top: '375px'
+        }}>
+          {TECH_ICONS[2].map((icon, index) => (
+            <div key={`middle-${index}`} style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px',
+              background: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px', backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+            }}>
+              <img src={icon.src} alt={icon.alt} style={{
+                width: '77px', height: '77px', objectFit: 'contain',
+                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+              }} onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextElementSibling.style.display = 'flex';
+              }} />
+              <div style={{
+                display: 'none', width: '77px', height: '77px',
+                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
+                alignItems: 'center', justifyContent: 'center', color: 'white',
+                fontSize: '29px', fontWeight: 'bold'
+              }}>{icon.name.charAt(0)}</div>
+              <span style={{
+                fontSize: '8px', color: 'white', fontWeight: '600',
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
+              }}>{icon.name}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{
+          position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)',
+          display: 'flex', gap: '12px', alignItems: 'center', top: '525px'
+        }}>
+          {TECH_ICONS[3].map((icon, index) => (
+            <div key={`bottom-${index}`} style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px',
+              background: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px', backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
+            }}>
+              <img src={icon.src} alt={icon.alt} style={{
+                width: '77px', height: '77px', objectFit: 'contain',
+                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+              }} onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextElementSibling.style.display = 'flex';
+              }} />
+              <div style={{
+                display: 'none', width: '77px', height: '77px',
+                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
+                alignItems: 'center', justifyContent: 'center', color: 'white',
+                fontSize: '29px', fontWeight: 'bold'
+              }}>{icon.name.charAt(0)}</div>
+              <span style={{
+                fontSize: '8px', color: 'white', fontWeight: '600',
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
+              }}>{icon.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
