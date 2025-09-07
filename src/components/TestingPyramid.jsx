@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import katalonLogo from '../assets/Katalon.png';
 import espressoLogo from '../assets/espresso_logo.png';
 import maestroLogo from '../assets/maestro.jpg';
+import questionMark from '../assets/question_mark.png';
 import sonarcloudLogo from '../assets/Sonarcloud.png';
 
 // === API SERVICE LAYER ===
@@ -100,7 +101,9 @@ const TECH_ICONS = {
   1: [{ src: katalonLogo, alt: 'Katalon', name: 'Katalon' }],
   2: [
     { src: espressoLogo, alt: 'Espresso', name: 'Espresso' },
-    { src: maestroLogo, alt: 'Maestro', name: 'Maestro' }
+    { src: maestroLogo, alt: 'Maestro', name: 'Maestro' },
+    { src: questionMark, alt: 'To_Research', name: 'To_Research' }
+
   ],
   3: [{ src: sonarcloudLogo, alt: 'SonarCloud', name: 'SonarCloud' }]
 };
