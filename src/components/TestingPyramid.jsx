@@ -143,11 +143,11 @@ const PyramidLayer = ({ theme, layerIndex, dimensions, clipPath, layerKey, hover
     <div style={{
       position: 'absolute', top: isTopLayer ? '60%' : '50%', left: '50%',
       transform: 'translate(-50%, -50%)', color: 'white', fontWeight: '700',
-      fontSize: '12px', textAlign: 'center', textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)',
+      fontSize: '20px', textAlign: 'center', textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)',
       pointerEvents: 'none'
     }}>
       <div>{title}</div>
-      <div style={{ fontSize: '10px', marginTop: '2px', opacity: 0.9 }}>{value}</div>
+      <div style={{ fontSize: '18px', marginTop: '2px', opacity: 0.9 }}>{value}</div>
     </div>
   </div>
 );
@@ -198,7 +198,7 @@ const PyramidSide = ({ theme, title, subtitle, topValue, bottomValue, hoveredLay
             layerKey={`${sidePrefix}2`} hoveredLayer={hoveredLayer}
             onMouseEnter={() => setHoveredLayer(`${sidePrefix}2`)}
             onMouseLeave={() => setHoveredLayer(null)}
-            title="Integration Tests" value="20%" isDisabled={middleLayerDisabled} />
+            title="Integration Tests" value="N/A" isDisabled={middleLayerDisabled} />
           <PyramidLayer theme={theme} layerIndex={2} dimensions={dimensions[2]} clipPath={clipPaths[2]}
             layerKey={`${sidePrefix}3`} hoveredLayer={hoveredLayer}
             onMouseEnter={() => setHoveredLayer(`${sidePrefix}3`)}
