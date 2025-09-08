@@ -55,7 +55,7 @@ console.log('🔧 Using configuration:', config);
 
 // Mock data for local development and fallbacks
 const MOCK_DATA = {
-  testRailCaseId: 'ID: 1117753',
+  testRailCaseId: 'ID: 00000',
   androidCoverage: '85.2%',
   iosCoverage: '78.9%'
 };
