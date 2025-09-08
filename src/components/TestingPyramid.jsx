@@ -134,16 +134,32 @@ const apiService = {
 
       console.log(`Fetched ${allCases.length} total test cases`);
 
-      // Calculate coverage
-      const totalTests = allCases.length;
-      const androidAutomated = allCases.filter(test => test.custom_automation_taco_android === 1).length;
-      const iosAutomated = allCases.filter(test => test.custom_automation_taco_ios === 1).length;
+      // Filter out tests that should be excluded from coverage calculation
+      // Exclude tests with custom_automation_taco_android values 2 and 4 from Android total
+      const androidEligibleTests = allCases.filter(test =>
+        test.custom_automation_taco_android !== 2 && test.custom_automation_taco_android !== 4
+      );
 
-      const androidCoverage = totalTests > 0 ? ((androidAutomated / totalTests) * 100).toFixed(1) : '0.0';
-      const iosCoverage = totalTests > 0 ? ((iosAutomated / totalTests) * 100).toFixed(1) : '0.0';
+      // Exclude tests with custom_automation_taco_ios values 2 and 4 from iOS total
+      const iosEligibleTests = allCases.filter(test =>
+        test.custom_automation_taco_ios !== 2 && test.custom_automation_taco_ios !== 4
+      );
 
-      console.log(`Android: ${androidAutomated}/${totalTests} = ${androidCoverage}%`);
-      console.log(`iOS: ${iosAutomated}/${totalTests} = ${iosCoverage}%`);
+      // Calculate coverage based on eligible tests only
+      const androidTotalEligible = androidEligibleTests.length;
+      const iosTotalEligible = iosEligibleTests.length;
+
+      // Count automated tests (value = 1) among eligible tests
+      const androidAutomated = androidEligibleTests.filter(test => test.custom_automation_taco_android === 1).length;
+      const iosAutomated = iosEligibleTests.filter(test => test.custom_automation_taco_ios === 1).length;
+
+      const androidCoverage = androidTotalEligible > 0 ? ((androidAutomated / androidTotalEligible) * 100).toFixed(1) : '0.0';
+      const iosCoverage = iosTotalEligible > 0 ? ((iosAutomated / iosTotalEligible) * 100).toFixed(1) : '0.0';
+
+      console.log(`Android: ${androidAutomated}/${androidTotalEligible} eligible tests = ${androidCoverage}%`);
+      console.log(`iOS: ${iosAutomated}/${iosTotalEligible} eligible tests = ${iosCoverage}%`);
+      console.log(`Excluded ${allCases.length - androidTotalEligible} tests from Android calculation`);
+      console.log(`Excluded ${allCases.length - iosTotalEligible} tests from iOS calculation`);
 
       return {
         androidCoverage: `${androidCoverage}%`,
