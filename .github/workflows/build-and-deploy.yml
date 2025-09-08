@@ -65,7 +65,7 @@ jobs:
         run: npm run build
         env:
           CI: false
-          PUBLIC_URL: /your-repo-name
+          PUBLIC_URL: /tp1
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
