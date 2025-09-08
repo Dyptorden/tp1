@@ -1,4 +1,4 @@
-// TestingPyramid.jsx - Complete file with sync functionality and GitHub Pages fixes
+// TestingPyramid.jsx - Simplified version without sync functionality
 import React, { useState, useEffect } from 'react';
 
 // Import technology icons
@@ -85,22 +85,9 @@ const MOCK_DATA = {
   iosCoverage: '78.9%'
 };
 
-// API Service with sync functionality
+// API Service
 const apiService = {
-  // Force fresh fetch with cache busting
-  async forceFreshFetch(url) {
-    const cacheBuster = `?_t=${Date.now()}&_r=${Math.random()}`;
-    const response = await fetch(url + cacheBuster, {
-      cache: 'no-cache',
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
-    });
-    return response;
-  },
-
-  async fetchTestRailFirstCaseId(forceFresh = false) {
+  async fetchTestRailFirstCaseId() {
     if (config.useMockData) {
       console.log('Using mock data for TestRail (local development)');
       return MOCK_DATA.testRailCaseId;
@@ -111,9 +98,7 @@ const apiService = {
 
       if (config.usePrebuiltData) {
         url = `${config.base}/testrail-cases.json`;
-        const response = forceFresh ?
-          await this.forceFreshFetch(url) :
-          await fetch(url);
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch pre-built data');
         data = await response.json();
       } else {
@@ -131,7 +116,7 @@ const apiService = {
     }
   },
 
-  async fetchAndroidCoverage(forceFresh = false) {
+  async fetchAndroidCoverage() {
     if (config.useMockData) {
       console.log('Using mock data for Android coverage (local development)');
       return MOCK_DATA.androidCoverage;
@@ -142,9 +127,7 @@ const apiService = {
 
       if (config.usePrebuiltData) {
         url = `${config.base}/android-coverage.json`;
-        const response = forceFresh ?
-          await this.forceFreshFetch(url) :
-          await fetch(url);
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch pre-built data');
         data = await response.json();
       } else {
@@ -162,7 +145,7 @@ const apiService = {
     }
   },
 
-  async fetchIOSCoverage(forceFresh = false) {
+  async fetchIOSCoverage() {
     if (config.useMockData) {
       console.log('Using mock data for iOS coverage (local development)');
       return MOCK_DATA.iosCoverage;
@@ -173,9 +156,7 @@ const apiService = {
 
       if (config.usePrebuiltData) {
         url = `${config.base}/ios-coverage.json`;
-        const response = forceFresh ?
-          await this.forceFreshFetch(url) :
-          await fetch(url);
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch pre-built data');
         data = await response.json();
       } else {
@@ -191,23 +172,6 @@ const apiService = {
       console.error('Error fetching iOS coverage:', error);
       return MOCK_DATA.iosCoverage;
     }
-  },
-
-  async fetchLastUpdated(forceFresh = false) {
-    if (!config.usePrebuiltData) return null;
-
-    try {
-      const url = `${config.base}/timestamp.json`;
-      const response = forceFresh ?
-        await this.forceFreshFetch(url) :
-        await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch timestamp');
-      const data = await response.json();
-      return new Date(data.lastUpdated).toLocaleString();
-    } catch (error) {
-      console.error('Error fetching timestamp:', error);
-      return null;
-    }
   }
 };
 
@@ -216,52 +180,26 @@ const usePyramidData = () => {
   const [testRailCaseId, setTestRailCaseId] = useState('Loading...');
   const [androidCoverage, setAndroidCoverage] = useState('Loading...');
   const [iosCoverage, setIOSCoverage] = useState('Loading...');
-  const [lastUpdated, setLastUpdated] = useState(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchAllData = async (forceFresh = false) => {
-    setIsRefreshing(true);
-    try {
-      console.log('Fetching data...', forceFresh ? '(force fresh)' : '(normal)');
-      const [caseId, androidCov, iosCov, timestamp] = await Promise.all([
-        apiService.fetchTestRailFirstCaseId(forceFresh),
-        apiService.fetchAndroidCoverage(forceFresh),
-        apiService.fetchIOSCoverage(forceFresh),
-        apiService.fetchLastUpdated(forceFresh)
+  useEffect(() => {
+    const fetchAllData = async () => {
+      console.log('Fetching data...');
+      const [caseId, androidCov, iosCov] = await Promise.all([
+        apiService.fetchTestRailFirstCaseId(),
+        apiService.fetchAndroidCoverage(),
+        apiService.fetchIOSCoverage()
       ]);
       setTestRailCaseId(caseId);
       setAndroidCoverage(androidCov);
       setIOSCoverage(iosCov);
-      setLastUpdated(timestamp);
-
-      if (forceFresh) {
-        console.log('Fresh data fetched, reloading page in 2 seconds...');
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      }
-    } finally {
-      if (!forceFresh) {
-        setIsRefreshing(false);
-      }
-    }
-  };
-
-  useEffect(() => {
+    };
     fetchAllData();
   }, []);
-
-  const syncAndReload = () => {
-    fetchAllData(true);
-  };
 
   return {
     testRailCaseId,
     androidCoverage,
-    iosCoverage,
-    lastUpdated,
-    isRefreshing,
-    syncAndReload
+    iosCoverage
   };
 };
 
@@ -401,7 +339,7 @@ const PyramidSide = ({ theme, title, subtitle, topValue, bottomValue, hoveredLay
 
 // === MAIN COMPONENT ===
 const TestingPyramid = () => {
-  const { testRailCaseId, androidCoverage, iosCoverage, lastUpdated, isRefreshing, syncAndReload } = usePyramidData();
+  const { testRailCaseId, androidCoverage, iosCoverage } = usePyramidData();
   const [hoveredLayer, setHoveredLayer] = useState(null);
   const [middleLayerDisabled] = useState(true);
 
@@ -415,67 +353,7 @@ const TestingPyramid = () => {
           0% { transform: translateX(-10px) translateY(-5px); }
           100% { transform: translateX(10px) translateY(5px); }
         }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
       `}</style>
-
-      {/* Data Status and Sync Controls */}
-      <div style={{
-        position: 'absolute', top: '10px', right: '10px', zIndex: 1000,
-        display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end'
-      }}>
-        {/* Last Updated */}
-        {lastUpdated && (
-          <div style={{
-            background: 'rgba(0, 0, 0, 0.7)', color: 'white', padding: '8px 12px',
-            borderRadius: '6px', fontSize: '12px', backdropFilter: 'blur(10px)'
-          }}>
-            Last updated: {lastUpdated}
-          </div>
-        )}
-
-        {/* Sync Button */}
-        <button
-          onClick={syncAndReload}
-          disabled={isRefreshing}
-          style={{
-            background: isRefreshing
-              ? 'rgba(100, 100, 100, 0.7)'
-              : 'rgba(59, 130, 246, 0.8)',
-            color: 'white',
-            border: 'none',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            fontSize: '12px',
-            cursor: isRefreshing ? 'not-allowed' : 'pointer',
-            backdropFilter: 'blur(10px)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseOver={(e) => {
-            if (!isRefreshing) {
-              e.target.style.background = 'rgba(59, 130, 246, 1)';
-            }
-          }}
-          onMouseOut={(e) => {
-            if (!isRefreshing) {
-              e.target.style.background = 'rgba(59, 130, 246, 0.8)';
-            }
-          }}
-        >
-          <span style={{
-            display: 'inline-block',
-            animation: isRefreshing ? 'spin 1s linear infinite' : 'none'
-          }}>
-            ↻
-          </span>
-          {isRefreshing ? 'Syncing...' : 'Sync Data'}
-        </button>
-      </div>
 
       {/* Connection Lines */}
       <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, transform: 'translateY(-290px)', zIndex: 1 }}>
