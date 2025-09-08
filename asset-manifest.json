@@ -1,0 +1,18 @@
+{
+  "files": {
+    "main.css": "/testing-pyramid/static/css/main.be2b974d.css",
+    "main.js": "/testing-pyramid/static/js/main.9cb9f92c.js",
+    "static/js/453.ef2f6af8.chunk.js": "/testing-pyramid/static/js/453.ef2f6af8.chunk.js",
+    "static/media/question_mark.png": "/testing-pyramid/static/media/question_mark.f0a94509ed48b116d3ad.png",
+    "static/media/espresso_logo.png": "/testing-pyramid/static/media/espresso_logo.13da9a4c902b7af4391c.png",
+    "static/media/Sonarcloud.png": "/testing-pyramid/static/media/Sonarcloud.5d1be508294733869fb0.png",
+    "index.html": "/testing-pyramid/index.html",
+    "main.be2b974d.css.map": "/testing-pyramid/static/css/main.be2b974d.css.map",
+    "main.9cb9f92c.js.map": "/testing-pyramid/static/js/main.9cb9f92c.js.map",
+    "453.ef2f6af8.chunk.js.map": "/testing-pyramid/static/js/453.ef2f6af8.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.be2b974d.css",
+    "static/js/main.9cb9f92c.js"
+  ]
+}
