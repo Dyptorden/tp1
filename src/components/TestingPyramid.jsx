@@ -1,4 +1,4 @@
-// TestingPyramid.jsx - Simplified version without sync functionality
+// TestingPyramid.jsx - Complete file with TestRail automation coverage
 import React, { useState, useEffect } from 'react';
 
 // Import technology icons
@@ -80,39 +80,82 @@ console.log('Using configuration:', config);
 
 // Mock data for fallbacks
 const MOCK_DATA = {
-  testRailCaseId: 'ID: 1117753',
   androidCoverage: '85.2%',
   iosCoverage: '78.9%'
 };
 
 // API Service
 const apiService = {
-  async fetchTestRailFirstCaseId() {
+  async fetchTestRailCoverage() {
     if (config.useMockData) {
-      console.log('Using mock data for TestRail (local development)');
-      return MOCK_DATA.testRailCaseId;
+      console.log('Using mock data for TestRail coverage (local development)');
+      return {
+        androidCoverage: '72.5%',
+        iosCoverage: '68.3%'
+      };
     }
 
     try {
-      let url, data;
+      let allCases = [];
+      let offset = 0;
+      const limit = 250;
+      let hasMore = true;
 
-      if (config.usePrebuiltData) {
-        url = `${config.base}/testrail-cases.json`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch pre-built data');
-        data = await response.json();
-      } else {
-        url = isLocalhost ? 'http://localhost:3001/api/testrail/cases' : `${config.base}/testrail/cases`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('API request failed');
-        data = await response.json();
+      // Fetch all pages of test cases
+      while (hasMore) {
+        let url, data;
+
+        if (config.usePrebuiltData) {
+          // GitHub Pages: Use pre-built data
+          // For simplicity, we'll assume the GitHub Action fetches all cases into one file
+          url = `${config.base}/testrail-cases.json`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('Failed to fetch pre-built data');
+          data = await response.json();
+          allCases = data.cases || [];
+          hasMore = false; // GitHub Action should fetch all cases
+        } else {
+          // Local development or production - handle pagination
+          const endpoint = `https://specialized.testrail.io/index.php?/api/v2/get_cases/13&suite_id=6596&limit=${limit}&offset=${offset}`;
+          url = isLocalhost ? `http://localhost:3001/api/testrail/cases?offset=${offset}` : endpoint;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error('API request failed');
+          data = await response.json();
+
+          if (data.cases && data.cases.length > 0) {
+            allCases = allCases.concat(data.cases);
+            offset += limit;
+            hasMore = data.cases.length === limit; // Continue if we got a full page
+          } else {
+            hasMore = false;
+          }
+        }
       }
 
-      const firstCase = data.cases?.[0];
-      return firstCase ? `ID: ${firstCase.id}` : 'No cases';
+      console.log(`Fetched ${allCases.length} total test cases`);
+
+      // Calculate coverage
+      const totalTests = allCases.length;
+      const androidAutomated = allCases.filter(test => test.custom_automation_taco_android === 1).length;
+      const iosAutomated = allCases.filter(test => test.custom_automation_taco_ios === 1).length;
+
+      const androidCoverage = totalTests > 0 ? ((androidAutomated / totalTests) * 100).toFixed(1) : '0.0';
+      const iosCoverage = totalTests > 0 ? ((iosAutomated / totalTests) * 100).toFixed(1) : '0.0';
+
+      console.log(`Android: ${androidAutomated}/${totalTests} = ${androidCoverage}%`);
+      console.log(`iOS: ${iosAutomated}/${totalTests} = ${iosCoverage}%`);
+
+      return {
+        androidCoverage: `${androidCoverage}%`,
+        iosCoverage: `${iosCoverage}%`
+      };
+
     } catch (error) {
-      console.error('Error fetching TestRail data:', error);
-      return MOCK_DATA.testRailCaseId;
+      console.error('Error fetching TestRail coverage:', error);
+      return {
+        androidCoverage: '72.5%',
+        iosCoverage: '68.3%'
+      };
     }
   },
 
@@ -177,29 +220,33 @@ const apiService = {
 
 // === CUSTOM HOOKS ===
 const usePyramidData = () => {
-  const [testRailCaseId, setTestRailCaseId] = useState('Loading...');
-  const [androidCoverage, setAndroidCoverage] = useState('Loading...');
-  const [iosCoverage, setIOSCoverage] = useState('Loading...');
+  const [testRailAndroidCoverage, setTestRailAndroidCoverage] = useState('Loading...');
+  const [testRailIOSCoverage, setTestRailIOSCoverage] = useState('Loading...');
+  const [sonarAndroidCoverage, setSonarAndroidCoverage] = useState('Loading...');
+  const [sonarIOSCoverage, setSonarIOSCoverage] = useState('Loading...');
 
   useEffect(() => {
     const fetchAllData = async () => {
       console.log('Fetching data...');
-      const [caseId, androidCov, iosCov] = await Promise.all([
-        apiService.fetchTestRailFirstCaseId(),
+      const [testRailCoverage, sonarAndroid, sonarIOS] = await Promise.all([
+        apiService.fetchTestRailCoverage(),
         apiService.fetchAndroidCoverage(),
         apiService.fetchIOSCoverage()
       ]);
-      setTestRailCaseId(caseId);
-      setAndroidCoverage(androidCov);
-      setIOSCoverage(iosCov);
+
+      setTestRailAndroidCoverage(testRailCoverage.androidCoverage);
+      setTestRailIOSCoverage(testRailCoverage.iosCoverage);
+      setSonarAndroidCoverage(sonarAndroid);
+      setSonarIOSCoverage(sonarIOS);
     };
     fetchAllData();
   }, []);
 
   return {
-    testRailCaseId,
-    androidCoverage,
-    iosCoverage
+    testRailAndroidCoverage,
+    testRailIOSCoverage,
+    sonarAndroidCoverage,
+    sonarIOSCoverage
   };
 };
 
@@ -423,31 +470,6 @@ const TestingPyramid = () => {
             </div>
           ))}
         </div>
-      </div>
-    </div>
-  );
-};
-
-export default TestingPyramid;icon.src} alt={icon.alt} style={{
-                width: '77px', height: '77px', objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-              }} onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextElementSibling.style.display = 'flex';
-              }} />
-              <div style={{
-                display: 'none', width: '77px', height: '77px',
-                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
-                alignItems: 'center', justifyContent: 'center', color: 'white',
-                fontSize: '29px', fontWeight: 'bold'
-              }}>{icon.name.charAt(0)}</div>
-              <span style={{
-                fontSize: '8px', color: 'white', fontWeight: '600',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
-              }}>{icon.name}</span>
-            </div>
-          ))}
-        </div>
 
         <div style={{
           position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)',
@@ -491,29 +513,6 @@ export default TestingPyramid;icon.src} alt={icon.alt} style={{
               border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
             }}>
               <img src={icon.src} alt={icon.alt} style={{
-                width: '77px', height: '77px', objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-              }} onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextElementSibling.style.display = 'flex';
-              }} />
-              <div style={{
-                display: 'none', width: '77px', height: '77px',
-                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
-                alignItems: 'center', justifyContent: 'center', color: 'white',
-                fontSize: '29px', fontWeight: 'bold'
-              }}>{icon.name.charAt(0)}</div>
-              <span style={{
-                fontSize: '8px', color: 'white', fontWeight: '600',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
-              }}>{icon.name}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};icon.src} alt={icon.alt} style={{
                 width: '77px', height: '77px', objectFit: 'contain',
                 filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
               }} onError={(e) => {
