@@ -44,6 +44,9 @@ const getCurrentConfig = () => {
 
 const config = getCurrentConfig();
 
+// Debug the configuration
+console.log('🔧 Using configuration:', config);
+
 // Mock data for local development and fallbacks
 const MOCK_DATA = {
   testRailCaseId: 'ID: 1117753',
