@@ -9,46 +9,154 @@ import questionMark from '../assets/question_mark.png';
 import sonarcloudLogo from '../assets/Sonarcloud.png';
 
 // === API SERVICE LAYER ===
+// Detect environment
+const isGitHubPages = window.location.hostname.includes('github.io') || window.location.hostname.includes('githubusercontent.com');
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+// API Configuration
+const API_CONFIG = {
+  // Local development - use mock data for simplicity
+  local: {
+    base: '/api-data',
+    usePrebuiltData: false,
+    useMockData: true // Set to false if you want to run proxy server
+  },
+  // GitHub Pages - use pre-built data from GitHub Actions
+  github: {
+    base: '/api-data',
+    usePrebuiltData: true,
+    useMockData: false
+  },
+  // Production with your backend
+  production: {
+    base: '/api',
+    usePrebuiltData: false,
+    useMockData: false
+  }
+};
+
+// Get current environment config
+const getCurrentConfig = () => {
+  if (isLocalhost) return API_CONFIG.local;
+  if (isGitHubPages) return API_CONFIG.github;
+  return API_CONFIG.production;
+};
+
+const config = getCurrentConfig();
+
+// Mock data for local development and fallbacks
+const MOCK_DATA = {
+  testRailCaseId: 'ID: 1117753',
+  androidCoverage: '85.2%',
+  iosCoverage: '78.9%'
+};
+
 const apiService = {
   async fetchTestRailFirstCaseId() {
+    if (config.useMockData) {
+      console.log('🔧 Using mock data for TestRail (local development)');
+      return MOCK_DATA.testRailCaseId;
+    }
+
     try {
-      // Use your backend proxy endpoint instead of direct API call
-      const response = await fetch('/api/testrail/cases');
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
+      let url, data;
+
+      if (config.usePrebuiltData) {
+        // GitHub Pages: Use pre-built data
+        url = `${config.base}/testrail-cases.json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch pre-built data');
+        data = await response.json();
+      } else {
+        // Local development with proxy or production backend
+        url = isLocalhost ? 'http://localhost:3001/api/testrail/cases' : `${config.base}/testrail/cases`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('API request failed');
+        data = await response.json();
+      }
+
       const firstCase = data.cases?.[0];
       return firstCase ? `ID: ${firstCase.id}` : 'No cases';
     } catch (error) {
       console.error('Error fetching TestRail data:', error);
-      return 'ID: 1117753'; // fallback to first case ID
+      return MOCK_DATA.testRailCaseId;
     }
   },
 
   async fetchAndroidCoverage() {
+    if (config.useMockData) {
+      console.log('🔧 Using mock data for Android coverage (local development)');
+      return MOCK_DATA.androidCoverage;
+    }
+
     try {
-      // Use your backend proxy endpoint instead of direct API call
-      const response = await fetch('/api/sonar/android-coverage');
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
+      let url, data;
+
+      if (config.usePrebuiltData) {
+        // GitHub Pages: Use pre-built data
+        url = `${config.base}/android-coverage.json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch pre-built data');
+        data = await response.json();
+      } else {
+        // Local development with proxy or production backend
+        url = isLocalhost ? 'http://localhost:3001/api/sonar/android-coverage' : `${config.base}/sonar/android-coverage`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('API request failed');
+        data = await response.json();
+      }
+
       const coverageValue = data.component?.measures?.find(m => m.metric === 'coverage')?.value;
-      return coverageValue ? `${coverageValue}%` : '85.0%';
+      return coverageValue ? `${coverageValue}%` : MOCK_DATA.androidCoverage;
     } catch (error) {
       console.error('Error fetching Android coverage:', error);
-      return '85.0%';
+      return MOCK_DATA.androidCoverage;
     }
   },
 
   async fetchIOSCoverage() {
+    if (config.useMockData) {
+      console.log('🔧 Using mock data for iOS coverage (local development)');
+      return MOCK_DATA.iosCoverage;
+    }
+
     try {
-      // Use your backend proxy endpoint instead of direct API call
-      const response = await fetch('/api/sonar/ios-coverage');
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
+      let url, data;
+
+      if (config.usePrebuiltData) {
+        // GitHub Pages: Use pre-built data
+        url = `${config.base}/ios-coverage.json`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch pre-built data');
+        data = await response.json();
+      } else {
+        // Local development with proxy or production backend
+        url = isLocalhost ? 'http://localhost:3001/api/sonar/ios-coverage' : `${config.base}/sonar/ios-coverage`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('API request failed');
+        data = await response.json();
+      }
+
       const coverageValue = data.component?.measures?.find(m => m.metric === 'coverage')?.value;
-      return coverageValue ? `${coverageValue}%` : '78.5%';
+      return coverageValue ? `${coverageValue}%` : MOCK_DATA.iosCoverage;
     } catch (error) {
       console.error('Error fetching iOS coverage:', error);
-      return '78.5%';
+      return MOCK_DATA.iosCoverage;
+    }
+  },
+
+  // Fetch last update timestamp for GitHub Pages
+  async fetchLastUpdated() {
+    if (!config.usePrebuiltData) return null;
+
+    try {
+      const response = await fetch(`${config.base}/timestamp.json`);
+      if (!response.ok) throw new Error('Failed to fetch timestamp');
+      const data = await response.json();
+      return new Date(data.lastUpdated).toLocaleString();
+    } catch (error) {
+      console.error('Error fetching timestamp:', error);
+      return null;
     }
   }
 };
@@ -58,22 +166,25 @@ const usePyramidData = () => {
   const [testRailCaseId, setTestRailCaseId] = useState('Loading...');
   const [androidCoverage, setAndroidCoverage] = useState('Loading...');
   const [iosCoverage, setIOSCoverage] = useState('Loading...');
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   useEffect(() => {
     const fetchAllData = async () => {
-      const [caseId, androidCov, iosCov] = await Promise.all([
+      const [caseId, androidCov, iosCov, timestamp] = await Promise.all([
         apiService.fetchTestRailFirstCaseId(),
         apiService.fetchAndroidCoverage(),
-        apiService.fetchIOSCoverage()
+        apiService.fetchIOSCoverage(),
+        apiService.fetchLastUpdated()
       ]);
       setTestRailCaseId(caseId);
       setAndroidCoverage(androidCov);
       setIOSCoverage(iosCov);
+      setLastUpdated(timestamp);
     };
     fetchAllData();
   }, []);
 
-  return { testRailCaseId, androidCoverage, iosCoverage };
+  return { testRailCaseId, androidCoverage, iosCoverage, lastUpdated };
 };
 
 // === STYLE CONSTANTS ===
@@ -239,120 +350,6 @@ const TestingPyramid = () => {
         <div style={{
           position: 'absolute', left: 0, right: 0, height: '2px',
           background: 'repeating-linear-gradient(to right, #64748b 0px, #64748b 8px, transparent 8px, transparent 16px)',
-          opacity: 0.6, top: '600px'
-        }} />
-      </div>
-
-      <PyramidSide
-        theme={COLORS.ANDROID} title="Android Testing" subtitle="Test Coverage Visualization"
-        topValue={testRailCaseId} bottomValue={androidCoverage} hoveredLayer={hoveredLayer}
-        setHoveredLayer={setHoveredLayer} middleLayerDisabled={middleLayerDisabled}
-        sidePrefix="android" />
-
-      <PyramidSide
-        theme={COLORS.IOS} title="iOS Testing" subtitle="Test Coverage Visualization"
-        topValue={testRailCaseId} bottomValue={iosCoverage} hoveredLayer={hoveredLayer}
-        setHoveredLayer={setHoveredLayer} middleLayerDisabled={middleLayerDisabled}
-        sidePrefix="ios" />
-
-      {/* Technology Icons - ALL 77px size */}
-      <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, transform: 'translateY(-290px)', zIndex: 20 }}>
-        <div style={{
-          position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)',
-          display: 'flex', gap: '12px', alignItems: 'center', top: '225px'
-        }}>
-          {TECH_ICONS[1].map((icon, index) => (
-            <div key={`top-${index}`} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px',
-              background: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px', backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-            }}>
-              <img src={icon.src} alt={icon.alt} style={{
-                width: '77px', height: '77px', objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-              }} onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextElementSibling.style.display = 'flex';
-              }} />
-              <div style={{
-                display: 'none', width: '77px', height: '77px',
-                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
-                alignItems: 'center', justifyContent: 'center', color: 'white',
-                fontSize: '29px', fontWeight: 'bold'
-              }}>{icon.name.charAt(0)}</div>
-              <span style={{
-                fontSize: '8px', color: 'white', fontWeight: '600',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
-              }}>{icon.name}</span>
-            </div>
-          ))}
-        </div>
-
-        <div style={{
-          position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)',
-          display: 'flex', gap: '12px', alignItems: 'center', top: '375px'
-        }}>
-          {TECH_ICONS[2].map((icon, index) => (
-            <div key={`middle-${index}`} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px',
-              background: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px', backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-            }}>
-              <img src={icon.src} alt={icon.alt} style={{
-                width: '77px', height: '77px', objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-              }} onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextElementSibling.style.display = 'flex';
-              }} />
-              <div style={{
-                display: 'none', width: '77px', height: '77px',
-                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
-                alignItems: 'center', justifyContent: 'center', color: 'white',
-                fontSize: '29px', fontWeight: 'bold'
-              }}>{icon.name.charAt(0)}</div>
-              <span style={{
-                fontSize: '8px', color: 'white', fontWeight: '600',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
-              }}>{icon.name}</span>
-            </div>
-          ))}
-        </div>
-
-        <div style={{
-          position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)',
-          display: 'flex', gap: '12px', alignItems: 'center', top: '525px'
-        }}>
-          {TECH_ICONS[3].map((icon, index) => (
-            <div key={`bottom-${index}`} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px',
-              background: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px', backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-            }}>
-              <img src={icon.src} alt={icon.alt} style={{
-                width: '77px', height: '77px', objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-              }} onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextElementSibling.style.display = 'flex';
-              }} />
-              <div style={{
-                display: 'none', width: '77px', height: '77px',
-                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
-                alignItems: 'center', justifyContent: 'center', color: 'white',
-                fontSize: '29px', fontWeight: 'bold'
-              }}>{icon.name.charAt(0)}</div>
-              <span style={{
-                fontSize: '8px', color: 'white', fontWeight: '600',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
-              }}>{icon.name}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};64748b 0px, #64748b 8px, transparent 8px, transparent 16px)',
           opacity: 0.6, top: '150px'
         }} />
         <div style={{
@@ -368,120 +365,6 @@ const TestingPyramid = () => {
         <div style={{
           position: 'absolute', left: 0, right: 0, height: '2px',
           background: 'repeating-linear-gradient(to right, #64748b 0px, #64748b 8px, transparent 8px, transparent 16px)',
-          opacity: 0.6, top: '600px'
-        }} />
-      </div>
-
-      <PyramidSide
-        theme={COLORS.ANDROID} title="Android Testing" subtitle="Test Coverage Visualization"
-        topValue={testRailCaseId} bottomValue={androidCoverage} hoveredLayer={hoveredLayer}
-        setHoveredLayer={setHoveredLayer} middleLayerDisabled={middleLayerDisabled}
-        sidePrefix="android" />
-
-      <PyramidSide
-        theme={COLORS.IOS} title="iOS Testing" subtitle="Test Coverage Visualization"
-        topValue={testRailCaseId} bottomValue={iosCoverage} hoveredLayer={hoveredLayer}
-        setHoveredLayer={setHoveredLayer} middleLayerDisabled={middleLayerDisabled}
-        sidePrefix="ios" />
-
-      {/* Technology Icons - ALL 77px size */}
-      <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, transform: 'translateY(-290px)', zIndex: 20 }}>
-        <div style={{
-          position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)',
-          display: 'flex', gap: '12px', alignItems: 'center', top: '225px'
-        }}>
-          {TECH_ICONS[1].map((icon, index) => (
-            <div key={`top-${index}`} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px',
-              background: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px', backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-            }}>
-              <img src={icon.src} alt={icon.alt} style={{
-                width: '77px', height: '77px', objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-              }} onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextElementSibling.style.display = 'flex';
-              }} />
-              <div style={{
-                display: 'none', width: '77px', height: '77px',
-                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
-                alignItems: 'center', justifyContent: 'center', color: 'white',
-                fontSize: '29px', fontWeight: 'bold'
-              }}>{icon.name.charAt(0)}</div>
-              <span style={{
-                fontSize: '8px', color: 'white', fontWeight: '600',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
-              }}>{icon.name}</span>
-            </div>
-          ))}
-        </div>
-
-        <div style={{
-          position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)',
-          display: 'flex', gap: '12px', alignItems: 'center', top: '375px'
-        }}>
-          {TECH_ICONS[2].map((icon, index) => (
-            <div key={`middle-${index}`} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px',
-              background: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px', backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-            }}>
-              <img src={icon.src} alt={icon.alt} style={{
-                width: '77px', height: '77px', objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-              }} onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextElementSibling.style.display = 'flex';
-              }} />
-              <div style={{
-                display: 'none', width: '77px', height: '77px',
-                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
-                alignItems: 'center', justifyContent: 'center', color: 'white',
-                fontSize: '29px', fontWeight: 'bold'
-              }}>{icon.name.charAt(0)}</div>
-              <span style={{
-                fontSize: '8px', color: 'white', fontWeight: '600',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
-              }}>{icon.name}</span>
-            </div>
-          ))}
-        </div>
-
-        <div style={{
-          position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)',
-          display: 'flex', gap: '12px', alignItems: 'center', top: '525px'
-        }}>
-          {TECH_ICONS[3].map((icon, index) => (
-            <div key={`bottom-${index}`} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px',
-              background: 'rgba(255, 255, 255, 0.1)', borderRadius: '8px', backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
-            }}>
-              <img src={icon.src} alt={icon.alt} style={{
-                width: '77px', height: '77px', objectFit: 'contain',
-                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-              }} onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextElementSibling.style.display = 'flex';
-              }} />
-              <div style={{
-                display: 'none', width: '77px', height: '77px',
-                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
-                alignItems: 'center', justifyContent: 'center', color: 'white',
-                fontSize: '29px', fontWeight: 'bold'
-              }}>{icon.name.charAt(0)}</div>
-              <span style={{
-                fontSize: '8px', color: 'white', fontWeight: '600',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
-              }}>{icon.name}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};64748b 0px, #64748b 8px, transparent 8px, transparent 16px)',
           opacity: 0.6, top: '600px'
         }} />
       </div>
