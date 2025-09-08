@@ -55,7 +55,7 @@ console.log('🔧 Using configuration:', config);
 
 // Mock data for local development and fallbacks
 const MOCK_DATA = {
-  testRailCaseId: 'ID: 00000',
+  testRailCaseId: 'ID: 000000',
   androidCoverage: '85.2%',
   iosCoverage: '78.9%'
 };
@@ -332,7 +332,7 @@ const PyramidSide = ({ theme, title, subtitle, topValue, bottomValue, hoveredLay
 
 // === MAIN COMPONENT ===
 const TestingPyramid = () => {
-  const { testRailCaseId, androidCoverage, iosCoverage, lastUpdated } = usePyramidData();
+  const { testRailCaseId, androidCoverage, iosCoverage, lastUpdated, isRefreshing, syncAndReload } = usePyramidData();
   const [hoveredLayer, setHoveredLayer] = useState(null);
   const [middleLayerDisabled] = useState(true);
 
@@ -343,16 +343,69 @@ const TestingPyramid = () => {
     }}>
       <style>{`@keyframes cloudMotion { 0% { transform: translateX(-10px) translateY(-5px); } 100% { transform: translateX(10px) translateY(5px); } }`}</style>
 
-      {/* Last Updated Indicator (for GitHub Pages) */}
-      {lastUpdated && (
-        <div style={{
-          position: 'absolute', top: '10px', right: '10px', zIndex: 1000,
-          background: 'rgba(0, 0, 0, 0.7)', color: 'white', padding: '8px 12px',
-          borderRadius: '6px', fontSize: '12px', backdropFilter: 'blur(10px)'
-        }}>
-          Last updated: {lastUpdated}
-        </div>
-      )}
+      {/* Data Status Indicator */}
+      <div style={{
+        position: 'absolute', top: '10px', right: '10px', zIndex: 1000,
+        display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end'
+      }}>
+        {/* Last Updated */}
+        {lastUpdated && (
+          <div style={{
+            background: 'rgba(0, 0, 0, 0.7)', color: 'white', padding: '8px 12px',
+            borderRadius: '6px', fontSize: '12px', backdropFilter: 'blur(10px)'
+          }}>
+            Last updated: {lastUpdated}
+          </div>
+        )}
+
+        {/* Sync Button */}
+        <button
+          onClick={syncAndReload}
+          disabled={isRefreshing}
+          style={{
+            background: isRefreshing
+              ? 'rgba(100, 100, 100, 0.7)'
+              : 'rgba(59, 130, 246, 0.8)',
+            color: 'white',
+            border: 'none',
+            padding: '8px 12px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            cursor: isRefreshing ? 'not-allowed' : 'pointer',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseOver={(e) => {
+            if (!isRefreshing) {
+              e.target.style.background = 'rgba(59, 130, 246, 1)';
+            }
+          }}
+          onMouseOut={(e) => {
+            if (!isRefreshing) {
+              e.target.style.background = 'rgba(59, 130, 246, 0.8)';
+            }
+          }}
+        >
+          <span style={{
+            display: 'inline-block',
+            animation: isRefreshing ? 'spin 1s linear infinite' : 'none'
+          }}>
+            ↻
+          </span>
+          {isRefreshing ? 'Syncing...' : 'Sync Data'}
+        </button>
+
+        {/* Add spin animation */}
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
 
       {/* Connection Lines - Dotted lines linking pyramid layers */}
       <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, transform: 'translateY(-290px)', zIndex: 1 }}>
