@@ -339,7 +339,7 @@ const PyramidSide = ({ theme, title, subtitle, topValue, bottomValue, hoveredLay
 
 // === MAIN COMPONENT ===
 const TestingPyramid = () => {
-  const { testRailCaseId, androidCoverage, iosCoverage } = usePyramidData();
+  const { testRailAndroidCoverage, testRailIOSCoverage, sonarAndroidCoverage, sonarIOSCoverage } = usePyramidData();
   const [hoveredLayer, setHoveredLayer] = useState(null);
   const [middleLayerDisabled] = useState(true);
 
@@ -381,13 +381,13 @@ const TestingPyramid = () => {
 
       <PyramidSide
         theme={COLORS.ANDROID} title="Android Testing" subtitle="Test Coverage Visualization"
-        topValue={testRailCaseId} bottomValue={androidCoverage} hoveredLayer={hoveredLayer}
+        topValue={testRailAndroidCoverage} bottomValue={sonarAndroidCoverage} hoveredLayer={hoveredLayer}
         setHoveredLayer={setHoveredLayer} middleLayerDisabled={middleLayerDisabled}
         sidePrefix="android" />
 
       <PyramidSide
         theme={COLORS.IOS} title="iOS Testing" subtitle="Test Coverage Visualization"
-        topValue={testRailCaseId} bottomValue={iosCoverage} hoveredLayer={hoveredLayer}
+        topValue={testRailIOSCoverage} bottomValue={sonarIOSCoverage} hoveredLayer={hoveredLayer}
         setHoveredLayer={setHoveredLayer} middleLayerDisabled={middleLayerDisabled}
         sidePrefix="ios" />
 
@@ -404,6 +404,31 @@ const TestingPyramid = () => {
               border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
             }}>
               <img src={icon.src} alt={icon.alt} style={{
+                width: '77px', height: '77px', objectFit: 'contain',
+                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+              }} onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextElementSibling.style.display = 'flex';
+              }} />
+              <div style={{
+                display: 'none', width: '77px', height: '77px',
+                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
+                alignItems: 'center', justifyContent: 'center', color: 'white',
+                fontSize: '29px', fontWeight: 'bold'
+              }}>{icon.name.charAt(0)}</div>
+              <span style={{
+                fontSize: '8px', color: 'white', fontWeight: '600',
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
+              }}>{icon.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TestingPyramid;icon.src} alt={icon.alt} style={{
                 width: '77px', height: '77px', objectFit: 'contain',
                 filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
               }} onError={(e) => {
@@ -466,6 +491,29 @@ const TestingPyramid = () => {
               border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 4px 16px rgba(0, 0, 0, 0.2)'
             }}>
               <img src={icon.src} alt={icon.alt} style={{
+                width: '77px', height: '77px', objectFit: 'contain',
+                filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+              }} onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextElementSibling.style.display = 'flex';
+              }} />
+              <div style={{
+                display: 'none', width: '77px', height: '77px',
+                background: 'linear-gradient(135deg, #60a5fa, #93c5fd)', borderRadius: '6px',
+                alignItems: 'center', justifyContent: 'center', color: 'white',
+                fontSize: '29px', fontWeight: 'bold'
+              }}>{icon.name.charAt(0)}</div>
+              <span style={{
+                fontSize: '8px', color: 'white', fontWeight: '600',
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)', textAlign: 'center', marginTop: '4px'
+              }}>{icon.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};icon.src} alt={icon.alt} style={{
                 width: '77px', height: '77px', objectFit: 'contain',
                 filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
               }} onError={(e) => {

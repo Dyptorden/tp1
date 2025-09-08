@@ -42,11 +42,48 @@ jobs:
           # Create data directory
           mkdir -p public/api-data
           
-          # Fetch TestRail data
-          curl -H 'Content-Type: application/json' \
-               -u '${{ secrets.TESTRAIL_EMAIL }}:${{ secrets.TESTRAIL_API_KEY }}' \
-               'https://specialized.testrail.io/index.php?/api/v2/get_cases/13&suite_id=6596' \
-               -o public/api-data/testrail-cases.json || echo '{"cases":[{"id":1117753}]}' > public/api-data/testrail-cases.json
+          # Fetch ALL TestRail test cases with pagination
+          echo '{"cases": []}' > public/api-data/testrail-cases.json
+          offset=0
+          limit=250
+          has_more=true
+          
+          while [ "$has_more" = true ]; do
+            echo "Fetching TestRail cases with offset $offset..."
+          
+            # Fetch current page
+            temp_file=$(mktemp)
+            curl -H 'Content-Type: application/json' \
+                 -u '${{ secrets.TESTRAIL_EMAIL }}:${{ secrets.TESTRAIL_API_KEY }}' \
+                 "https://specialized.testrail.io/index.php?/api/v2/get_cases/13&suite_id=6596&limit=$limit&offset=$offset" \
+                 -o "$temp_file" || echo '{"cases":[]}' > "$temp_file"
+          
+            # Check if we got any cases
+            case_count=$(jq '.cases | length' "$temp_file" 2>/dev/null || echo "0")
+          
+            if [ "$case_count" -gt 0 ]; then
+              # Merge cases with existing data
+              jq -s '.[0].cases + .[1].cases | {cases: .}' \
+                public/api-data/testrail-cases.json "$temp_file" > temp_merged.json
+              mv temp_merged.json public/api-data/testrail-cases.json
+          
+              # Update offset for next iteration
+              offset=$((offset + limit))
+          
+              # Check if we need to continue (if we got a full page)
+              if [ "$case_count" -lt "$limit" ]; then
+                has_more=false
+              fi
+            else
+              has_more=false
+            fi
+          
+            rm -f "$temp_file"
+          done
+          
+          # Log total cases fetched
+          total_cases=$(jq '.cases | length' public/api-data/testrail-cases.json)
+          echo "Total TestRail cases fetched: $total_cases"
           
           # Fetch Android coverage (using shared SONAR_AUTH)
           curl -H 'Authorization: Basic ${{ secrets.SONAR_AUTH }}' \
