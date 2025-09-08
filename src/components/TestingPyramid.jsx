@@ -23,7 +23,7 @@ const API_CONFIG = {
   },
   // GitHub Pages - use pre-built data from GitHub Actions
   github: {
-    base: '/api-data',
+    base: '/tp1/api-data',
     usePrebuiltData: true,
     useMockData: false
   },
