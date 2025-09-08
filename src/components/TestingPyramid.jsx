@@ -37,6 +37,12 @@ const API_CONFIG = {
 
 // Get current environment config
 const getCurrentConfig = () => {
+  // Temporary: Force GitHub Pages mode for debugging
+  if (window.location.hostname === 'dyptorden.github.io') {
+    console.log('🚀 Forcing GitHub Pages mode');
+    return API_CONFIG.github;
+  }
+
   if (isLocalhost) return API_CONFIG.local;
   if (isGitHubPages) return API_CONFIG.github;
   return API_CONFIG.production;
