@@ -1,4 +1,4 @@
-// TestingPyramid.jsx - Updated with TestRail and SonarCloud data
+// TestingPyramid.jsx - Complete file with sync functionality and GitHub Pages fixes
 import React, { useState, useEffect } from 'react';
 
 // Import technology icons
@@ -9,9 +9,21 @@ import questionMark from '../assets/question_mark.png';
 import sonarcloudLogo from '../assets/Sonarcloud.png';
 
 // === API SERVICE LAYER ===
-// Detect environment
-const isGitHubPages = window.location.hostname.includes('github.io') || window.location.hostname.includes('githubusercontent.com');
-const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+// Environment detection
+const isGitHubPages = window.location.hostname.includes('github.io') ||
+                     window.location.hostname.includes('githubusercontent.com') ||
+                     window.location.hostname === 'dyptorden.github.io';
+const isLocalhost = window.location.hostname === 'localhost' ||
+                   window.location.hostname === '127.0.0.1' ||
+                   window.location.hostname === '';
+
+// Debug logging
+console.log('Environment Detection:', {
+  hostname: window.location.hostname,
+  href: window.location.href,
+  isGitHubPages,
+  isLocalhost
+});
 
 // API Configuration
 const API_CONFIG = {
@@ -19,9 +31,9 @@ const API_CONFIG = {
   local: {
     base: '/api-data',
     usePrebuiltData: false,
-    useMockData: true // Set to false if you want to run proxy server
+    useMockData: true
   },
-  // GitHub Pages - use pre-built data from GitHub Actions
+  // GitHub Pages - Fixed path for tp1 repo
   github: {
     base: '/tp1/api-data',
     usePrebuiltData: true,
@@ -35,35 +47,62 @@ const API_CONFIG = {
   }
 };
 
-// Get current environment config
+// Environment config selection
 const getCurrentConfig = () => {
-  // Temporary: Force GitHub Pages mode for debugging
+  console.log('Environment check:', {
+    hostname: window.location.hostname,
+    pathname: window.location.pathname,
+    isLocalhost,
+    isGitHubPages
+  });
+
   if (window.location.hostname === 'dyptorden.github.io') {
-    console.log('🚀 Forcing GitHub Pages mode');
+    console.log('Using GitHub Pages config');
     return API_CONFIG.github;
   }
 
-  if (isLocalhost) return API_CONFIG.local;
-  if (isGitHubPages) return API_CONFIG.github;
+  if (isLocalhost) {
+    console.log('Using localhost config');
+    return API_CONFIG.local;
+  }
+
+  if (isGitHubPages) {
+    console.log('Using GitHub Pages config (generic)');
+    return API_CONFIG.github;
+  }
+
+  console.log('Using production config');
   return API_CONFIG.production;
 };
 
 const config = getCurrentConfig();
+console.log('Using configuration:', config);
 
-// Debug the configuration
-console.log('🔧 Using configuration:', config);
-
-// Mock data for local development and fallbacks
+// Mock data for fallbacks
 const MOCK_DATA = {
-  testRailCaseId: 'ID: 000000',
+  testRailCaseId: 'ID: 1117753',
   androidCoverage: '85.2%',
   iosCoverage: '78.9%'
 };
 
+// API Service with sync functionality
 const apiService = {
-  async fetchTestRailFirstCaseId() {
+  // Force fresh fetch with cache busting
+  async forceFreshFetch(url) {
+    const cacheBuster = `?_t=${Date.now()}&_r=${Math.random()}`;
+    const response = await fetch(url + cacheBuster, {
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+    return response;
+  },
+
+  async fetchTestRailFirstCaseId(forceFresh = false) {
     if (config.useMockData) {
-      console.log('🔧 Using mock data for TestRail (local development)');
+      console.log('Using mock data for TestRail (local development)');
       return MOCK_DATA.testRailCaseId;
     }
 
@@ -71,13 +110,13 @@ const apiService = {
       let url, data;
 
       if (config.usePrebuiltData) {
-        // GitHub Pages: Use pre-built data
         url = `${config.base}/testrail-cases.json`;
-        const response = await fetch(url);
+        const response = forceFresh ?
+          await this.forceFreshFetch(url) :
+          await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch pre-built data');
         data = await response.json();
       } else {
-        // Local development with proxy or production backend
         url = isLocalhost ? 'http://localhost:3001/api/testrail/cases' : `${config.base}/testrail/cases`;
         const response = await fetch(url);
         if (!response.ok) throw new Error('API request failed');
@@ -92,9 +131,9 @@ const apiService = {
     }
   },
 
-  async fetchAndroidCoverage() {
+  async fetchAndroidCoverage(forceFresh = false) {
     if (config.useMockData) {
-      console.log('🔧 Using mock data for Android coverage (local development)');
+      console.log('Using mock data for Android coverage (local development)');
       return MOCK_DATA.androidCoverage;
     }
 
@@ -102,13 +141,13 @@ const apiService = {
       let url, data;
 
       if (config.usePrebuiltData) {
-        // GitHub Pages: Use pre-built data
         url = `${config.base}/android-coverage.json`;
-        const response = await fetch(url);
+        const response = forceFresh ?
+          await this.forceFreshFetch(url) :
+          await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch pre-built data');
         data = await response.json();
       } else {
-        // Local development with proxy or production backend
         url = isLocalhost ? 'http://localhost:3001/api/sonar/android-coverage' : `${config.base}/sonar/android-coverage`;
         const response = await fetch(url);
         if (!response.ok) throw new Error('API request failed');
@@ -123,9 +162,9 @@ const apiService = {
     }
   },
 
-  async fetchIOSCoverage() {
+  async fetchIOSCoverage(forceFresh = false) {
     if (config.useMockData) {
-      console.log('🔧 Using mock data for iOS coverage (local development)');
+      console.log('Using mock data for iOS coverage (local development)');
       return MOCK_DATA.iosCoverage;
     }
 
@@ -133,13 +172,13 @@ const apiService = {
       let url, data;
 
       if (config.usePrebuiltData) {
-        // GitHub Pages: Use pre-built data
         url = `${config.base}/ios-coverage.json`;
-        const response = await fetch(url);
+        const response = forceFresh ?
+          await this.forceFreshFetch(url) :
+          await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch pre-built data');
         data = await response.json();
       } else {
-        // Local development with proxy or production backend
         url = isLocalhost ? 'http://localhost:3001/api/sonar/ios-coverage' : `${config.base}/sonar/ios-coverage`;
         const response = await fetch(url);
         if (!response.ok) throw new Error('API request failed');
@@ -154,12 +193,14 @@ const apiService = {
     }
   },
 
-  // Fetch last update timestamp for GitHub Pages
-  async fetchLastUpdated() {
+  async fetchLastUpdated(forceFresh = false) {
     if (!config.usePrebuiltData) return null;
 
     try {
-      const response = await fetch(`${config.base}/timestamp.json`);
+      const url = `${config.base}/timestamp.json`;
+      const response = forceFresh ?
+        await this.forceFreshFetch(url) :
+        await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch timestamp');
       const data = await response.json();
       return new Date(data.lastUpdated).toLocaleString();
@@ -176,24 +217,52 @@ const usePyramidData = () => {
   const [androidCoverage, setAndroidCoverage] = useState('Loading...');
   const [iosCoverage, setIOSCoverage] = useState('Loading...');
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchAllData = async () => {
+  const fetchAllData = async (forceFresh = false) => {
+    setIsRefreshing(true);
+    try {
+      console.log('Fetching data...', forceFresh ? '(force fresh)' : '(normal)');
       const [caseId, androidCov, iosCov, timestamp] = await Promise.all([
-        apiService.fetchTestRailFirstCaseId(),
-        apiService.fetchAndroidCoverage(),
-        apiService.fetchIOSCoverage(),
-        apiService.fetchLastUpdated()
+        apiService.fetchTestRailFirstCaseId(forceFresh),
+        apiService.fetchAndroidCoverage(forceFresh),
+        apiService.fetchIOSCoverage(forceFresh),
+        apiService.fetchLastUpdated(forceFresh)
       ]);
       setTestRailCaseId(caseId);
       setAndroidCoverage(androidCov);
       setIOSCoverage(iosCov);
       setLastUpdated(timestamp);
-    };
+
+      if (forceFresh) {
+        console.log('Fresh data fetched, reloading page in 2 seconds...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }
+    } finally {
+      if (!forceFresh) {
+        setIsRefreshing(false);
+      }
+    }
+  };
+
+  useEffect(() => {
     fetchAllData();
   }, []);
 
-  return { testRailCaseId, androidCoverage, iosCoverage, lastUpdated };
+  const syncAndReload = () => {
+    fetchAllData(true);
+  };
+
+  return {
+    testRailCaseId,
+    androidCoverage,
+    iosCoverage,
+    lastUpdated,
+    isRefreshing,
+    syncAndReload
+  };
 };
 
 // === STYLE CONSTANTS ===
@@ -341,9 +410,18 @@ const TestingPyramid = () => {
       minHeight: '100vh', display: 'flex', fontFamily: 'system-ui, -apple-system, sans-serif',
       position: 'relative', overflow: 'hidden'
     }}>
-      <style>{`@keyframes cloudMotion { 0% { transform: translateX(-10px) translateY(-5px); } 100% { transform: translateX(10px) translateY(5px); } }`}</style>
+      <style>{`
+        @keyframes cloudMotion {
+          0% { transform: translateX(-10px) translateY(-5px); }
+          100% { transform: translateX(10px) translateY(5px); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
 
-      {/* Data Status Indicator */}
+      {/* Data Status and Sync Controls */}
       <div style={{
         position: 'absolute', top: '10px', right: '10px', zIndex: 1000,
         display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end'
@@ -397,17 +475,9 @@ const TestingPyramid = () => {
           </span>
           {isRefreshing ? 'Syncing...' : 'Sync Data'}
         </button>
-
-        {/* Add spin animation */}
-        <style>{`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
 
-      {/* Connection Lines - Dotted lines linking pyramid layers */}
+      {/* Connection Lines */}
       <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, transform: 'translateY(-290px)', zIndex: 1 }}>
         <div style={{
           position: 'absolute', left: 0, right: 0, height: '2px',
@@ -443,7 +513,7 @@ const TestingPyramid = () => {
         setHoveredLayer={setHoveredLayer} middleLayerDisabled={middleLayerDisabled}
         sidePrefix="ios" />
 
-      {/* Technology Icons - ALL 77px size */}
+      {/* Technology Icons */}
       <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, transform: 'translateY(-290px)', zIndex: 20 }}>
         <div style={{
           position: 'absolute', left: '50%', transform: 'translate(-50%, -50%)',
