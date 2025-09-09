@@ -388,7 +388,7 @@ const PyramidSide = ({ theme, title, subtitle, topValue, bottomValue, hoveredLay
             layerKey={`${sidePrefix}2`} hoveredLayer={hoveredLayer}
             onMouseEnter={() => setHoveredLayer(`${sidePrefix}2`)}
             onMouseLeave={() => setHoveredLayer(null)}
-            title="Integration Tests" value="N/A" isDisabled={middleLayerDisabled} />
+            title="Component Tests" value="N/A" isDisabled={middleLayerDisabled} />
           <PyramidLayer theme={theme} layerIndex={2} dimensions={dimensions[2]} clipPath={clipPaths[2]}
             layerKey={`${sidePrefix}3`} hoveredLayer={hoveredLayer}
             onMouseEnter={() => setHoveredLayer(`${sidePrefix}3`)}
